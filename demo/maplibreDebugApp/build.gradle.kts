@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalWasmDsl::class)
+
 import org.jetbrains.compose.ExperimentalComposeLibrary
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -10,6 +13,10 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     jvm {
         compilations.all {
             kotlinOptions.jvmTarget = "11"
@@ -39,7 +46,7 @@ kotlin {
             api(libs.kotlinx.io.core)
             implementation(project(":library"))
             implementation(project(":maplibre-rasterizer"))
-            implementation("io.github.oleksandrbalan:lazytable:1.10.0")
+            implementation(libs.lazytable)
             implementation(libs.kotlinx.serialization.json)
 
         }
@@ -54,7 +61,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-            implementation("org.slf4j:slf4j-simple:2.0.12")
+            implementation(libs.slf4j.simple)
         }
 
         wasmJsMain.dependencies {
