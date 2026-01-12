@@ -1,7 +1,7 @@
 package ovh.plrapps.mapcompose.maplibre.util
 
 import ovh.plrapps.mapcompose.core.ViewportInfo
-import ovh.plrapps.mapcompose.maplibre.renderer.utils.MVTViewport
+import ovh.plrapps.mapcompose.vector.renderer.utils.MVTViewport
 
 fun ViewportInfo.toMVTViewport() = MVTViewport(
     width = (this.size.width).toFloat(),

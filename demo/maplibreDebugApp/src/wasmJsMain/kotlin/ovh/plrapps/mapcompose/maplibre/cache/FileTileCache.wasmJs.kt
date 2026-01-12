@@ -1,6 +1,6 @@
 package ovh.plrapps.mapcompose.maplibre.cache
 
-import ovh.plrapps.mapcompose.maplibre.data.TileCache
+import ovh.plrapps.mapcompose.vector.data.TileCache
 
 /**
  * TODO OPFS implementation for browsers (js/wasm)

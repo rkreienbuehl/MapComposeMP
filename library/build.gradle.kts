@@ -1,6 +1,8 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class, ExperimentalWasmDsl::class)
 
+import org.jetbrains.compose.ExperimentalComposeLibrary
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -8,11 +10,16 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinx.serialization)
     `maven-publish`
     signing
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
@@ -49,6 +56,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.skia)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -60,16 +68,32 @@ kotlin {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.skia)
             api(libs.kotlinx.io.core)
+
+            // TODO: remove eventually after changes
+            implementation(libs.pbandk.runtime)
+
+            // TODO: remove after changes, if possible
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.serialization)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.cio)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
         }
         iosMain.dependencies {
-
+            // TODO: remove after changes, if possible
+            implementation(libs.ktor.client.darwin)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.kotlinx.datetime)
+
+            @OptIn(ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
         }
     }
 }
@@ -101,6 +125,16 @@ android {
     }
     dependencies {
         debugImplementation(libs.compose.ui.tooling)
+    }
+
+    testOptions {
+        unitTests {
+            all {
+                // Excluded ui tests because of issues documented on
+                // https://kotlinlang.org/docs/multiplatform/compose-test.html#write-and-run-common-tests
+                it.exclude("**/mapcompose/vector/**")
+            }
+        }
     }
 }
 

@@ -1,10 +1,9 @@
 package ovh.plrapps.mapcompose.maplibre.cache
 
 import java.io.File
-import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import ovh.plrapps.mapcompose.maplibre.data.TileCache
+import ovh.plrapps.mapcompose.vector.data.TileCache
 
 actual class FileTileCache actual constructor(private val cacheDir: String) : TileCache {
     private val cacheDirectories = mutableMapOf<String, File>()

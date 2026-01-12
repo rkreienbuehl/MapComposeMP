@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
-import kotlin.math.abs
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.Buffer
@@ -31,16 +30,16 @@ import org.jetbrains.skia.EncodedImageFormat
 import ovh.plrapps.mapcompose.api.*
 import ovh.plrapps.mapcompose.core.TileStreamProvider
 import ovh.plrapps.mapcompose.core.ViewportInfo
-import ovh.plrapps.mapcompose.maplibre.MapLibreRasterizer
+import ovh.plrapps.mapcompose.vector.MapLibreRasterizer
 import ovh.plrapps.mapcompose.maplibre.cache.FileTileCache
-import ovh.plrapps.mapcompose.maplibre.data.getMapLibreConfiguration
-import ovh.plrapps.mapcompose.maplibre.renderer.CompoundLabelPlacement
-import ovh.plrapps.mapcompose.maplibre.renderer.Symbol
-import ovh.plrapps.mapcompose.maplibre.renderer.collision.CollisionDetector
-import ovh.plrapps.mapcompose.maplibre.renderer.collision.LabelPlacement
+import ovh.plrapps.mapcompose.vector.data.getMapLibreConfiguration
+import ovh.plrapps.mapcompose.vector.renderer.CompoundLabelPlacement
+import ovh.plrapps.mapcompose.vector.renderer.Symbol
+import ovh.plrapps.mapcompose.vector.renderer.collision.CollisionDetector
+import ovh.plrapps.mapcompose.vector.renderer.collision.LabelPlacement
 import ovh.plrapps.mapcompose.maplibre.util.toMVTViewport
-import ovh.plrapps.mapcompose.maplibre.utils.obb.OBB
-import ovh.plrapps.mapcompose.maplibre.utils.obb.ObbPoint
+import ovh.plrapps.mapcompose.vector.utils.obb.OBB
+import ovh.plrapps.mapcompose.vector.utils.obb.ObbPoint
 import ovh.plrapps.mapcompose.ui.layout.Fit
 import ovh.plrapps.mapcompose.ui.state.MapState
 import ovh.plrapps.mapcompose.utils.throttle
@@ -392,7 +391,7 @@ class MapComposeEngineViewModel(
             bounds = newBounds,
             obb = OBB(
                 center = ObbPoint(center.x, center.y),
-                size = ovh.plrapps.mapcompose.maplibre.utils.obb.Size(rectWidth, rectHeight),
+                size = ovh.plrapps.mapcompose.vector.utils.obb.Size(rectWidth, rectHeight),
                 rotation = angle
             )
         )
