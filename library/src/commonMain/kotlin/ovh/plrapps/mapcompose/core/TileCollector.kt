@@ -110,66 +110,76 @@ internal class TileCollector(
                 }
             }.awaitAll()
 
-            val firstLayerImage = bitmapForLayers.firstOrNull()?.source?.decodeFirstLayer(
-                hasLayers = layers.size > 1,
-                optimizeForLowEndDevices = optimizeForLowEndDevices,
-                subSamplingRatio = subSamplingRatio,
-                workerData = workerData
-            ) ?: run {
-                tilesDownloaded.send(spec)
-                /* When the decoding failed or if there's nothing to decode, then send back the Tile
-                 * just as in normal processing, so that the actor which submits tiles specs to the
-                 * collector knows that this tile has been processed and does not immediately
-                 * re-sends the same spec. */
-                tilesOutput.send(
-                    Tile(
-                        spec.zoom,
-                        spec.row,
-                        spec.col,
-                        spec.subSample,
-                        layerIds,
-                        layers.map { it.alpha }
+            try {
+                val firstLayerImage = bitmapForLayers.firstOrNull()?.source?.decodeFirstLayer(
+                    hasLayers = layers.size > 1,
+                    optimizeForLowEndDevices = optimizeForLowEndDevices,
+                    subSamplingRatio = subSamplingRatio,
+                    workerData = workerData
+                ) ?: run {
+                    tilesDownloaded.send(spec)
+                    /* When the decoding failed or if there's nothing to decode, then send back the
+                     * Tile just as in normal processing, so that the actor which submits tiles specs
+                     * to the collector knows that this tile has been processed and does not
+                     * immediately re-sends the same spec. */
+                    tilesOutput.send(
+                        Tile(
+                            spec.zoom,
+                            spec.row,
+                            spec.col,
+                            spec.subSample,
+                            layerIds,
+                            layers.map { it.alpha }
+                        )
                     )
-                )
-                null
-            } ?: continue // If the decoding of the first layer failed, skip the rest
+                    null
+                } ?: continue // If the decoding of the first layer failed, skip the rest
 
-            val resultImage = if (layers.size > 1) {
-                val canvas = Canvas(firstLayerImage)
+                val resultImage = if (layers.size > 1) {
+                    val canvas = Canvas(firstLayerImage)
 
-                var previousLayer: ImageBitmap? = null
-                for (result in bitmapForLayers.drop(1)) {
-                    paint.alpha = result.layer.alpha
-                    if (result.source == null) continue
-                    previousLayer = result.source.decodeOverlay(
-                        previousLayer = previousLayer,
-                        tileSize = tileSize,
-                        optimizeForLowEndDevices = optimizeForLowEndDevices,
-                        subSamplingRatio = subSamplingRatio,
-                        workerData = workerData
-                    ) ?: continue
-                    canvas.drawImage(
-                        image = previousLayer,
-                        topLeftOffset = Offset.Zero,
-                        paint = paint
-                    )
+                    var previousLayer: ImageBitmap? = null
+                    for (result in bitmapForLayers.drop(1)) {
+                        paint.alpha = result.layer.alpha
+                        if (result.source == null) continue
+                        previousLayer = result.source.decodeOverlay(
+                            previousLayer = previousLayer,
+                            tileSize = tileSize,
+                            optimizeForLowEndDevices = optimizeForLowEndDevices,
+                            subSamplingRatio = subSamplingRatio,
+                            workerData = workerData
+                        ) ?: continue
+                        canvas.drawImage(
+                            image = previousLayer,
+                            topLeftOffset = Offset.Zero,
+                            paint = paint
+                        )
+                    }
+
+                    processFinalImage(firstLayerImage, previousLayer)
+                } else firstLayerImage
+
+                val tile = Tile(
+                    spec.zoom,
+                    spec.row,
+                    spec.col,
+                    spec.subSample,
+                    layerIds,
+                    layers.map { it.alpha }
+                ).apply {
+                    this.bitmap = resultImage
                 }
-
-                processFinalImage(firstLayerImage, previousLayer)
-            } else firstLayerImage
-
-            val tile = Tile(
-                spec.zoom,
-                spec.row,
-                spec.col,
-                spec.subSample,
-                layerIds,
-                layers.map { it.alpha }
-            ).apply {
-                this.bitmap = resultImage
+                tilesOutput.send(tile)
+                tilesDownloaded.send(spec)
+            } finally {
+                /* The collector owns the sources it obtained from the TileStreamProvider, so it
+                 * closes them on every exit path - including the `continue` above, and cancellation
+                 * at either `send`. A source left open holds a file descriptor until the GC
+                 * finalizes it. */
+                for (bitmapForLayer in bitmapForLayers) {
+                    runCatching { bitmapForLayer.source?.close() }
+                }
             }
-            tilesOutput.send(tile)
-            tilesDownloaded.send(spec)
         }
     }
 

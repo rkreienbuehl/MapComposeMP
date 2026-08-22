@@ -17,6 +17,9 @@ import kotlinx.io.RawSource
  * If [getTileStream] returns null, the tile won't be rendered.
  * The library does not handle exceptions thrown from [getTileStream]. Such errors are treated as
  * unrecoverable failures.
+ *
+ * The returned [RawSource] is owned by MapCompose, which closes it once the tile has been decoded.
+ * Implementations must not close it themselves, and must not retain a reference to it.
  */
 fun interface TileStreamProvider {
     suspend fun getTileStream(row: Int, col: Int, zoomLvl: Int): RawSource?
