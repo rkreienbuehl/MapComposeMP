@@ -66,10 +66,14 @@ internal actual fun processFinalImage(currentImage: ImageBitmap, previousLayer: 
     return if (canUseHardwareBitmaps()) {
         previousLayer?.asAndroidBitmap()?.recycle()
         val bitmap = currentImage.asAndroidBitmap()
-        bitmap.copy(Config.HARDWARE, false).asImageBitmap().also {
-            /* Since we copied to hardware bitmap, be can recycle */
+        /* Hardware allocation can fail (GPU memory, fd pressure, ..), in which case copy()
+         * returns null. Keep the software bitmap rather than losing the tile. */
+        val hardwareBitmap = bitmap.copy(Config.HARDWARE, false)
+        if (hardwareBitmap != null) {
+            /* Since we copied to hardware bitmap, we can recycle */
             bitmap.recycle()
-        }
+            hardwareBitmap.asImageBitmap()
+        } else currentImage
     } else currentImage
 }
 
