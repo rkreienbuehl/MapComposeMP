@@ -1,6 +1,6 @@
 [versions]
 # ---- Build tools / Android SDK (global) ----
-agp = "9.3.2"
+agp = "9.4.0"
 kotlin = "2.4.10"
 android-compileSdk = "37"
 android-minSdk = "24"
